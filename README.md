@@ -18,7 +18,7 @@
 
 ## datasets
 - clickme_test.tfrecords (Orginial ClickMe testing dataset, 17,000+ images in total)
-    - please downloaded via [link](https://drive.google.com/file/d/1-0qjq7LYGokmpXs9e6G9DbUvZxJJUAdm/view?usp=share_link)
+    - please download via [link](https://drive.google.com/file/d/1-0qjq7LYGokmpXs9e6G9DbUvZxJJUAdm/view?usp=share_link)
 - clickme_test_1000.tfrecords (We use this one, 1 image for 1 class, 1000 images in total)
     - please execute **ClickMe_test_1000.py**
 
