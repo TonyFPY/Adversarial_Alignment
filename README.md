@@ -1,4 +1,4 @@
-# Adverserial_Attacks_ClickMe
+# Adversarial_Alignment
 
 ## scripts
 - Legacy 
