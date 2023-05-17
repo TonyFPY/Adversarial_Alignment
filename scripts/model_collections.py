@@ -6,8 +6,7 @@ class Models:
             "swin", "mixnet", "dpn", "darknet", "maxvit", "beit", "vit_clip",
             "volo", "deit", "nfnet", "cait", "xcit", "tinynet", "lcnet", "dla", 
             "mnasnet", "coatnet", "csp", 
-            "resize_group_0", "resize_group_1", "resize_group_2", "resize_group_3", "resize_group_4",
-            "test0", "test1", "test2", "paper2018"
+            "0", "1", "2", "3", "4",
         ]
 
     def get_num_models(self, name):
@@ -151,27 +150,6 @@ class Models:
                 'xcit_nano_12_p8_384_dist', 'xcit_nano_12_p16_384_dist',  'xcit_small_12_p8_384_dist',  'xcit_small_12_p16_384_dist', 
                 'xcit_small_24_p8_384_dist', 'xcit_small_24_p16_384_dist', 'xcit_tiny_12_p8_384_dist', 'xcit_tiny_12_p16_384_dist', 
                 'xcit_tiny_24_p8_384_dist', 'xcit_tiny_24_p16_384_dist']
-
-        # if name == "test0":
-        #     return [
-        #         "tinynet_e", "mobilenetv3_small_050", "resnet50", "resnet101",
-        #         "vit_base_patch8_224"]   
-
-        # if name == "test1":
-        #     return [
-        #         "convnext_xlarge_in22ft1k"] 
-
-        # if name == "test2":
-        #     return [
-        #         "cait_m36_384"
-        #     ]  
-        
-        # if name == "paper2018":
-        #     return [
-        #         'resnet50', 'resnet101', 'resnet152', 'inception_resnet_v2', 'inception_v3', 
-        #         'inception_v4', 'vgg16', 'vgg19', 'mobilenetv2_050', 'mobilenetv2_100',
-        #         'densenet121', 'densenet161', 'densenet169', 
-        #     ]
 
         return []
 

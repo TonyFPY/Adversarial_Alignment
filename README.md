@@ -1,49 +1,54 @@
 # Adversarial_Alignment
 
-## scripts
-- Legacy 
-    - 021 HFI Benchmark Pytorch.ipynb  
-        - Reference code from Ivan
-    - Adversarial_Attacks_ClickMe_FGSM.py 
-        - Can be executed on lab node
-        - Environment deployment is based on Model-VS-Human code repo
-        - 79 PyTorch model
-        - 4 Tensforflow model (To be implemented)
-    - Results_FGSM.ipynb (Results Visualization)
-- main.py
-- model_collections.py
-    - 245 models in total
-- dataset.py
-    - Load 1000 ClickMe data
-- parameters.py
-    - Parameters for attack strategy
-- util.py
-    - Spearman correlation
-    - L-2 norm
-    - L-inf norm
-    - Write results into .csv files
-- ClickMe_test_1000.py  
-    - Extract 1000 images from the original ClickMe test data
-    - 1 image for 1 class, 1000 images in total
-- Adversarial_Attacks_Test.ipynb
-    - A test file to test different attacks
-- Attack-VS-Human.ipynb
-    - A test file to test attacks regions vs. human attention maps
-- Results_Visualization.ipynb
-    - L-2 norm vs. ImageNet Top-1 Accuracy
-    - L-inf norm vs. ImageNet Top-1 Accuracy
-    - Spearman correlation vs. ImageNet Top-1 Accuracy
+<div style="display: flex; justify-content: center;">
+<img src="./README/teaser.png"  style="width: 50%;"/>
+</div>
+<p><p><p>
 
-## results 
-- FGSM.csv (a temp result)
+Deep neural networks (DNNs) are known to have a fundamental sensitivity to adversarial attacks, perturbations of the input that are imperceptible to humans
+yet powerful enough to change the visual decision of a model. Adversarial attacks have long been considered the “Achilles’ heel” of deep learning, which may eventually force a shift in modeling paradigms. Nevertheless, the formidable capabilities of modern large-scale DNNs have somewhat eclipsed these early concerns. Do adversarial attacks continue to pose a threat to DNNs?
 
-## datasets
-- imagenet_acc.csv
-    - Extracted from [pytorch-image-models](https://github.com/huggingface/pytorch-image-models/blob/main/results/results-imagenet.csv)
-- clickme_test.tfrecords (Orginial ClickMe testing dataset, 17,000+ images in total)
-    - please download via [link](https://drive.google.com/file/d/1-0qjq7LYGokmpXs9e6G9DbUvZxJJUAdm/view?usp=share_link)
-- clickme_test_1000.tfrecords (We use this one, 1 image for 1 class, 1000 images in total)
-    - please execute **ClickMe_test_1000.py**
+## Dataset
+Currently, we do our experiments on [ClickMe dataset](https://connectomics.clps.brown.edu/tf_records/), a large-scale effort for capturing feature importance maps from human participants that highlight parts that are relevant and irrelevant for recognition. The TF-Record file should be placed in `/datasets`. We create a subset of 'ClickMe', one image per category, in our experiment.
 
-## papers
-- Is Robustness the Cost of Accuracy? ([GitHub](https://github.com/huanzhang12/Adversarial_Survey), [Paper](https://arxiv.org/abs/1808.01688))
+## Environment Setup
+
+```
+conda create -n adv python=3.8 -y
+conda activate adv
+pip install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorch-cuda=11.7 -c pytorch -c nvidia
+pip install tensorflow==2.12.0
+pip install timm==0.8.10.dev0
+pip install harmonization
+pip install numpy matplotlib scipy tqdm pandas
+```
+
+## Implementations
+- You can enter the following command in Terminal
+```
+python main.py --model "resnet" --cuda 0 --spearman 1
+```
+- Google Colab notebook
+    - You can run 2 .ipynb files if you have installation issues. Please check the folder `./scripts`
+
+
+## Images 
+- There are 10 example images in `./images`. 
+- The images contains ImageNet images, human feature importance maps from ClickMe, and adversarial attacks for a variety of DNNs.
+
+## Models
+- In our experiment, 283 models have been tested
+    - 125 PyTorch CNN models from [timm library](https://timm.fast.ai/)
+    - 121 PyTorch ViT models from [timm library](https://timm.fast.ai/)
+    - 15 PyTorch ViT/CNN hybrid architectures from [timm library](https://timm.fast.ai/)
+    - 14 Tensorflow Harmonized models from [harmonizatin library](https://serre-lab.github.io/Harmonization/)
+    - 4 Baseline models
+    - 4 models that were trained for robustness to adversarial example
+- The Top-1 ImageNet accuracy for each model refers to [Hugging Face results](https://github.com/huggingface/pytorch-image-models/blob/main/results/results-imagenet.csv)
+
+## Acknowledgement
+This work relies heavily on [ClickMe](https://connectomics.clps.brown.edu/tf_records/) and [Harmonization](https://serre-lab.github.io/Harmonization/).
+
+## License
+The package is released under [MIT license](https://choosealicense.com/licenses/mit/)
+

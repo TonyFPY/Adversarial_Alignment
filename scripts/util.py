@@ -55,28 +55,28 @@ def linf_loss(x, y):
 def l2_loss(x, y):
     return np.linalg.norm(x.flatten() - y.flatten(), ord=2)
 
-def write_CSV_all(record, path):
-    header = ['model', 'img', 'eps', 'l2', 'linf', 'lpips', 'spearman']
+def write_csv_all(record, path):
+    header = ['model', 'img', 'label', 'pred', 'eps', 'l2', 'linf', 'spearman']
     file_exists = os.path.isfile(path)
 
     with open(path, mode='a+', newline='') as csv_file:
         writer = csv.writer(csv_file)
-
         if not file_exists:
             writer.writerow(header)
-
         writer.writerow(record)
 
-def write_CSV_avg(record, path):
-    header = ['model', 'num_correct', 'avg_eps', 'avg_l2', 'avg_linf', 'avg_lpips', 'avg_spearman']
+def write_csv_avg(record, path):
+    header = ['model', 'num_correct', 
+              'avg_eps', 'std_eps', 
+              'avg_l2', 'std_l2', 
+              'avg_linf', 'std_linf', 
+              'avg_spearman', 'std_spearman']
     file_exists = os.path.isfile(path)
 
     with open(path, mode='a+', newline='') as csv_file:
         writer = csv.writer(csv_file)
-
         if not file_exists:
             writer.writerow(header)
-
         writer.writerow(record)
 
 '''

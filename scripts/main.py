@@ -1,12 +1,3 @@
-'''
-python Adversarial_Attacks_Distortion.py --model "resnet" --cuda "0" --lpips "vgg"
-python Adversarial_Attacks_Distortion.py --model "vgg" --cuda "1" --lpips "vgg"
-python Adversarial_Attacks_Distortion.py --model "efficientnet" --cuda "2" --lpips "vgg"
-python Adversarial_Attacks_Distortion.py --model "vit_b16" --cuda "3" --lpips "vgg"
-python Adversarial_Attacks_Distortion.py --model "convnext" --cuda "4" --lpips "vgg"
-python Adversarial_Attacks_Distortion.py --model "maxvit" --cuda "5" --lpips "vgg"
-'''
-
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
@@ -21,29 +12,29 @@ import timm
 import model_collections
 import torchattacks
 import argparse
-from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity as lpips
 
 import util
 import model_collections
 import parameters
 import dataset
+import attack
 
 def warn(*args, **kwargs):
     pass
 import warnings
 warnings.warn = warn
 
-def attack(model, img, target, eps, alpha):
+def attack(model, img, target, eps, alpha=0.5, iter=3):
     # Initialize an attack
-    attack_obj = torchattacks.FFGSM(model=model, eps=eps, alpha=alpha) 
-    # attack_obj = torchattacks.BIM(model, eps=eps, alpha=10/255, steps=20)
+    attack_obj = attack(model, images, labels, eps, alpha=alpha, iters=iter)
     perturbed_img = attack_obj(img, target)
 
     # Re-classify the perturbed image
     with torch.no_grad():
         output = model(perturbed_img)
         pred = torch.argmax(output, axis=-1) # get the index of the max log-probability
-
+        
+    del attack_obj
     return perturbed_img, pred
 
 def main():
@@ -64,15 +55,6 @@ def main():
                             "resize_group_0", "resize_group_1", "resize_group_2", "resize_group_3", "resize_group_4"
                         ],
                         help="Please see util.py")
-    parser.add_argument("-l", "--lpips",
-                        required=True,
-                        choices=['None', 'alex', 'vgg', 'squeeze'],
-                        help="Please see util.py")
-    parser.add_argument("-r", "--resize",
-                        required=True,
-                        choices=[1, 0],
-                        type = int,
-                        help="Some models input needs resized")
     parser.add_argument("-s", "--spearman",
                         required=True,
                         choices=[1, 0],
@@ -91,19 +73,14 @@ def main():
 
     # Get parameters for FFGSM
     para = parameters.Parameters()
-    epsilons = para.get_epsilons()
+    eps_upper, eps_lower = para.get_epsilons()
     alpha = para.get_alpha()
-
-    # Initialize lpips
-    if args.lpips != "None":
-        PerceptualSimilarity = lpips(net_type=args.lpips).to(device)
+    iter = para.get_iter()
 
     # Define paths
-    case = "FFGSM_spearman_corr"
+    case = "L2PGD"
     data_path = '../datasets/clickme_test_1000.tfrecords'
     results_path_avg = '../results/' + case + '.csv'
-    # results_path_avg = '../results/BIM_distortion.csv'
-    # results_path_all = '../results/FFGSM_distortion/FFGSM_distortion_' + model_type + '.csv'
 
     offset = 0
     for i, model_name in enumerate(model_names[offset:]):
@@ -116,8 +93,7 @@ def main():
         else:
             print(f"Folder already exists: {folder_path}")
         results_path_all = folder_path + '/' + case + '_' + model_name + '.csv'
-        # results_path_all = '../results/BIM_distortion/BIM_distortion_' + model_name + '.csv'
-
+  
         # Model Instantiation
         try:
             model = timm.create_model(model_name, num_classes=1000, pretrained=True).to(device)
@@ -130,7 +106,6 @@ def main():
         data = dataset.Dataset(data_path)
         l2_list, linf_list = [], []
         opt_epsilons = []
-        lpips_scores = []
         spearman_scores = []
         total_cnt, init_correct, aa_correct = 0, 0, 0
 
@@ -138,16 +113,15 @@ def main():
             imgs = util.tf2torch(imgs).to(device)
             hmps = util.tf2torch(hmps)
 
-            if args.resize == 1:
-                items = model_name.split('_') # usually the last item is a number
-                size = items[-1]
-                for i in range(len(items)-1, -1, -1):
-                    size = items[i]
-                    if size.isdigit():
-                        break
-                size = int(size)
-                # print(size)
-                transform = transforms.Resize((size, size), transforms.InterpolationMode.BICUBIC)
+            imgs = tf2torch(imgs)
+            hmps = tf2torch(hmps)
+
+            # Apply image transformation to meet the input requirements
+            nh, nw = timm_transforms.transforms[1].size
+            _, _, h, w = imgs.shape
+            if not (h, w) == (nh, nw):
+                # print(h, w, nh, nw)
+                transform = transforms.Resize((nh, nw), transforms.InterpolationMode.BICUBIC)
                 imgs = transform(imgs)
                 hmps = transform(hmps)
 
@@ -164,7 +138,6 @@ def main():
                 # print(hmp.shape)
                 label = torch.unsqueeze(label, 0)
                 target = torch.argmax(label, axis=-1) # tensor([343], device='cuda:0')
-
                 # print(img.shape, target.shape)
 
                 # Forward pass the data through the model
@@ -184,55 +157,61 @@ def main():
                 # key: eps; val: perturbed_img
                 info = {} # Only store one key-val pair
                 key = None
-
+                
                 # Apply first attack
-                initial_eps = 0.001
-                initial_eps_id = epsilons.index(initial_eps)
-                perturbed_img, perturbed_pred = attack(model=model, img=img, target=target, eps=initial_eps, alpha=alpha)
+                initial_eps = eps_upper
+                perturbed_img, perturbed_pred = attack(model=model, img=img, target=target, eps=initial_eps, alpha=alpha, iter=iter)
 
-                # Define search boundary
-                if perturbed_pred.item() == target.item():
-                    l, r = initial_eps_id+1, len(epsilons)-1
+                if perturbed_pred.item() == target.item(): 
+                    # Assume 10 is the min eps that fools the model
+                    continue
                 else:
-                    l, r = 0, initial_eps_id
+                    # key: eps; val: perturbed_img
+                    info = {} # Only store one key-val pair
+                    key = None
+
+                    initial_eps = 1
+                    perturbed_img, perturbed_pred = attack(model=model, img=img, target=target, eps=initial_eps, alpha=alpha, iter=iter)
+
                     key = initial_eps
-                    info[initial_eps] = perturbed_img
+                    info[key] = (perturbed_img, perturbed_pred)
 
-                # Apply binary search, find the first epsilon that causes the successful attack
-                while l < r:
-                    m = l + (r - l) // 2
-                    eps = epsilons[m]
-                    perturbed_img, perturbed_pred = attack(model=model, img=img, target=target, eps=eps, alpha=alpha)
-                    if perturbed_pred.item() == target.item():
-                        l = m + 1
+                    if perturbed_pred.item() != target.item():
+                        l, r = eps_lower, 1 # search eps between 0.001 and 1
+                        threshold = 0.01
                     else:
-                        r = m
-                        if not key or key > eps:
-                            if key:
-                                info.pop(key)
-                            info[eps] = perturbed_img
-                            key = eps
+                        l, r = 1, eps_upper # search eps between 1 and 10
+                        threshold = 0.1 
 
-                # Get optimal eps
-                optimal_eps = epsilons[l]
+                    # Apply binary search
+                    while r - l >= threshold:
+                        eps = l + (r - l) / 2
+                        perturbed_img, perturbed_pred = attack(model=model, img=img, target=target, eps=initial_eps, alpha=alpha, iter=iter)
+                        if perturbed_pred.item() != target.item():
+                            r = eps
+                            if r != key:
+                                del info[key]
+                                key = r
+                                info[key] = (perturbed_img, perturbed_pred)
+                        else:
+                            l = eps
+
+                    optimal_eps = r
+                    if r in info:
+                        perturbed_img, perturbed_pred = info[r]
+                    else:
+                        perturbed_img, perturbed_pred = attack(model=model, img=img, target=target, eps=initial_eps, alpha=alpha, iter=iter)
+
+                    if not (perturbed_pred.item() != target.item()): 
+                        continue
+
                 opt_epsilons.append(optimal_eps)
-                if not optimal_eps in info:
-                    perturbed_img, _ = attack(model=model, img=img, target=target, eps=optimal_eps, alpha=alpha)
-                else:
-                    perturbed_img = info[optimal_eps]
 
                 # Store l2, linf
                 a, b = perturbed_img.cpu().numpy(), img.cpu().numpy()
                 l2, linf = util.l2_loss(a, b), util.linf_loss(a, b)
                 l2_list.append(l2)
                 linf_list.append(linf)
-
-                # LPIPS 
-                if args.lpips != "None":
-                    lpips_score = PerceptualSimilarity(perturbed_img, img).item() if args.lpips != None else -1
-                else:
-                    lpips_score = 0
-                lpips_scores.append(lpips_score)
 
                 # Spearman correlation
                 if args.spearman == 1:
@@ -242,20 +221,22 @@ def main():
 
                 # Save the data into 
                 row_data = [
-                    model_name, str(total_cnt-1), str(round(optimal_eps, 5)), 
-                    str(l2), str(linf), str(lpips_score), str(spearman_score)
+                    model_name, str(total_cnt-1), str(target.item()), str(perturbed_pred.item()), 
+                    str(round(optimal_eps, 6)), str(l2), str(linf), str(spearman_score)
                 ]
-                util.write_CSV_all(row_data, results_path_all)
+                util.write_csv_all(row_data, results_path_all)
 
         print("")
         
         # Save data
         row_data = [
-            model_name, str(init_correct), str(np.mean(opt_epsilons)), 
-            str(np.mean(l2_list)), str(np.mean(linf_list)), 
-            str(np.mean(lpips_scores)), str(np.mean(spearman_scores))
+            model_name, str(init_correct), 
+            str(np.mean(opt_epsilons)), str(np.std(opt_epsilons)),
+            str(np.mean(l2_list)), str(np.std(l2_list)),
+            str(np.mean(linf_list)), str(np.std(linf_list)),
+            str(np.mean(spearman_scores)), str(np.std(spearman_scores)),
         ]
-        util.write_CSV_avg(row_data, results_path_avg)
+        util.write_csv_avg(row_data, results_path_avg)
 
         torch.cuda.empty_cache()
    
