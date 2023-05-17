@@ -1,8 +1,8 @@
 # Adversarial_Alignment
 
-<div style="display: flex; justify-content: center;">
+<p align="center">
 <img src="./README/teaser.png"  style="width: 50%;"/>
-</div>
+</p>
 <p><p><p>
 
 Deep neural networks (DNNs) are known to have a fundamental sensitivity to adversarial attacks, perturbations of the input that are imperceptible to humans
