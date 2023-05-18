@@ -48,9 +48,6 @@ python main.py --model "resnet" --cuda 0 --spearman 1
     - 4 models that were trained for robustness to adversarial example
 - The Top-1 ImageNet accuracy for each model refers to [Hugging Face results](https://github.com/huggingface/pytorch-image-models/blob/main/results/results-imagenet.csv)
 
-## Acknowledgement
-This work relies heavily on [ClickMe](https://connectomics.clps.brown.edu/tf_records/) and [Harmonization](https://serre-lab.github.io/Harmonization/).
-
 ## License
 The package is released under [MIT license](https://choosealicense.com/licenses/mit/)
 
