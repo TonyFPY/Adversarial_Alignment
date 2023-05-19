@@ -18,7 +18,7 @@ We did our experiments on [ClickMe dataset](https://connectomics.clps.brown.edu/
 ```
 conda create -n adv python=3.8 -y
 conda activate adv
-pip install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorch-cuda=11.7 -c pytorch -c nvidia
+conda install pytorch==1.13.1 torchvision==0.14.1 pytorch-cuda=11.7 -c pytorch -c nvidia
 pip install tensorflow==2.12.0
 pip install timm==0.8.10.dev0
 pip install harmonization
