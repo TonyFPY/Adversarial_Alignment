@@ -43,6 +43,6 @@ class Attack:
             x_next = x_next + (delta / sigma) * eps
             
             # ready for the next step
-            xt = x_next.clamp(min=0, max=255).detach()
+            xt = x_next.clamp(min=0, max=1).detach()
 
         return xt

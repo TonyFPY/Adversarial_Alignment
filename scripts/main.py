@@ -113,9 +113,6 @@ def main():
             imgs = util.tf2torch(imgs).to(device)
             hmps = util.tf2torch(hmps)
 
-            imgs = tf2torch(imgs)
-            hmps = tf2torch(hmps)
-
             # Apply image transformation to meet the input requirements
             nh, nw = timm_transforms.transforms[1].size
             _, _, h, w = imgs.shape
