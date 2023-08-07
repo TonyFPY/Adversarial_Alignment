@@ -2,9 +2,9 @@ class Parameters:
     def __init__(self):
         self.eps_upper = 10
         
-        self.eps_lower = 0.01
+        self.eps_lower = 0.001
         
-        self.alpha = 0.5
+        self.alpha = 1/224
         
         self.iter = 3
 
