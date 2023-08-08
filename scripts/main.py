@@ -24,7 +24,7 @@ def warn(*args, **kwargs):
 import warnings
 warnings.warn = warn
 
-def attack(model, img, target, eps, alpha=1/224, iter=3):
+def attack(model, img, target, eps, alpha=10/255, iter=3):
     # Initialize an attack
     attack_obj = attack(model, images, labels, eps, alpha=alpha, iters=iter)
     perturbed_img = attack_obj(img, target)
