@@ -4,7 +4,7 @@ class Parameters:
         
         self.eps_lower = 0.001
         
-        self.alpha = 1/224
+        self.alpha = 1/255
         
         self.iter = 3
 
