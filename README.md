@@ -1,6 +1,6 @@
 # Adversarial_Alignment
 
-<p><p><p><p
+<p><p><p>
 <p align="center">
 <img src="./README/pt_and_aa.jpg"  style="width: 80%;"/>
 </p>
